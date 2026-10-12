@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mood Cooler</title>
+<meta name="description" content="Press a button to play a short music clip and cool the room down.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Chakra+Petch:wght@500;700&display=swap">
+<style>
+/* Layout: an air-conditioner remote on the left, the video screen and notes on the right; stacks on phones. */
+:root {
+  --wall: #E3E9EB;
+  --ink: #1B2528;
+  --muted: #5B696E;
+  --line: #C8D2D5;
+  --shell: #F7F8F6;
+  --shell-edge: #D2D9DA;
+  --key: #FFFFFF;
+  --key-edge: #C3CCCF;
+  --lcd: #BCE4D9;
+  --lcd-ink: #10382F;
+  --lcd-off: rgba(16, 56, 47, .18);
+  --stop: #CF4536;
+  --stop-ink: #FFFFFF;
+  --link: #1C67B8;
+  --m1: #23917A;
+  --m2: #B87D06;
+  --m3: #3C78B5;
+  --font-lcd: "Share Tech Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-tag: "Chakra Petch", "Arial Narrow", system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --wall: #111619; --ink: #E3EBED; --muted: #93A3A8; --line: #2B353A;
+    --shell: #22292D; --shell-edge: #0A0E10; --key: #2C343A; --key-edge: #14191C;
+    --lcd: #0C2622; --lcd-ink: #84F0D6; --lcd-off: rgba(132, 240, 214, .14);
+    --stop: #E0574A; --stop-ink: #FFFFFF; --link: #7DB7FF;
+    --m1: #4FD0B1; --m2: #EFB43A; --m3: #79B4F0;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+[hidden] { display: none !important; }
+body {
+  background: var(--wall); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.wrap {
+  max-width: 1000px; margin: 0 auto; padding-inline: 16px; padding-block: 36px 56px;
+  display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 48px; align-items: start;
+}
+@media (max-width: 780px) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-block: 20px 40px; } }
+
+/* ---------- remote ---------- */
+.remote {
+  background: var(--shell);
+  border: 1px solid var(--shell-edge);
+  border-radius: 40px 40px 56px 56px;
+  padding: 22px 20px 30px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 18px 40px -18px rgba(0,0,0,.35), 0 4px 10px -4px rgba(0,0,0,.18);
+  display: grid; gap: 18px;
+  width: 100%; max-width: 380px; justify-self: center;
+}
+.brand { display: flex; justify-content: space-between; align-items: baseline; padding-inline: 6px; }
+.brand b { font-family: var(--font-tag); font-weight: 700; letter-spacing: .14em; font-size: 13px; }
+.brand span { font-size: 12px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.ir { width: 34px; height: 8px; border-radius: 6px; background: var(--ink); opacity: .8; margin: 0 auto -6px; }
+
+.lcd {
+  background: var(--lcd); color: var(--lcd-ink);
+  border-radius: 14px; padding: 12px 16px 14px;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,.22);
+  font-family: var(--font-lcd);
+  display: grid; gap: 4px;
+}
+.seg-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; }
+.segs { display: flex; gap: 12px; flex-wrap: wrap; }
+.seg { color: var(--lcd-off); transition: color .15s; }
+.seg.lit { color: var(--lcd-ink); }
+.temp-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.temp { font-size: 84px; line-height: .9; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.temp sup { font-size: 26px; vertical-align: top; margin-left: 2px; position: relative; top: 8px; }
+.side { display: grid; justify-items: end; gap: 6px; padding-bottom: 6px; font-size: 13px; }
+.snow { width: 30px; height: 30px; color: var(--lcd-off); transition: color .2s; }
+.snow.lit { color: var(--lcd-ink); }
+.fan { display: flex; gap: 3px; align-items: flex-end; height: 18px; }
+.fan i { display: block; width: 6px; background: var(--lcd-off); border-radius: 1px; }
+.fan i:nth-child(1) { height: 6px; } .fan i:nth-child(2) { height: 11px; } .fan i:nth-child(3) { height: 18px; }
+.on .fan i { animation: fan 0.9s steps(1) infinite; }
+.on .fan i:nth-child(2) { animation-delay: .3s; } .on .fan i:nth-child(3) { animation-delay: .6s; }
+@keyframes fan { 0%, 66% { background: var(--lcd-off); } 33% { background: var(--lcd-ink); } }
+.on .snow { animation: spin 3s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.bar { height: 6px; border-radius: 3px; background: var(--lcd-off); overflow: hidden; margin-top: 6px; }
+.bar i { display: block; height: 100%; width: 0; background: var(--lcd-ink); }
+
+.keys { display: grid; gap: 12px; }
+.key {
+  appearance: none; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: none;
+  background: var(--key); border: 1px solid var(--key-edge); border-radius: 18px;
+  box-shadow: 0 3px 0 var(--key-edge);
+  padding: 12px 14px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center;
+  transition: transform .06s, box-shadow .06s, border-color .15s;
+}
+.key:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--key-edge); }
+.key .num {
+  width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--font-tag); font-weight: 700; font-size: 17px; color: var(--shell);
+  background: var(--c);
+}
+.key .name { font-size: 18px; font-weight: 700; display: block; line-height: 1.3; }
+.key .hint { font-size: 13px; color: var(--muted); display: block; line-height: 1.4; }
+.key .tag {
+  font-family: var(--font-tag); font-size: 11px; letter-spacing: .08em; font-weight: 500;
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; color: var(--muted); white-space: nowrap;
+}
+.key .tag.ready { border-color: var(--c); color: var(--c); }
+.key.active { border-color: var(--c); box-shadow: 0 3px 0 var(--c); }
+
+.bottom { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; padding-top: 4px; }
+.stop {
+  appearance: none; border: 0; cursor: pointer; font: inherit;
+  width: 72px; height: 72px; border-radius: 50%;
+  background: var(--stop); color: var(--stop-ink);
+  box-shadow: 0 4px 0 rgba(0,0,0,.25);
+  display: grid; place-items: center; align-content: center;
+}
+.stop:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.25); }
+.stop svg { width: 26px; height: 26px; }
+.stop span { font-family: var(--font-tag); font-size: 11px; letter-spacing: .12em; font-weight: 700; }
+.clip { border: 0; padding: 0; margin: 0; min-width: 0; }
+.clip legend { font-size: 12px; color: var(--muted); padding: 0; margin-bottom: 6px; }
+.clip-opts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--key-edge); border-radius: 12px; overflow: hidden; }
+.clip-opts label { position: relative; text-align: center; cursor: pointer; }
+.clip-opts input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.clip-opts span { display: block; padding: 8px 0; font-family: var(--font-tag); font-weight: 500; font-size: 14px; background: var(--key); border-left: 1px solid var(--key-edge); }
+.clip-opts label:first-child span { border-left: 0; }
+.clip-opts input:checked + span { background: var(--ink); color: var(--shell); }
+.clip-opts input:focus-visible + span { outline: 3px solid var(--link); outline-offset: -3px; }
+
+/* ---------- right column ---------- */
+.sheet { display: grid; gap: 28px; min-width: 0; }
+.sheet h1 { font-size: 28px; line-height: 1.25; margin: 0 0 8px; text-wrap: balance; }
+.sheet h2 { font-size: 17px; margin: 0 0 10px; }
+.sheet p { margin: 0; color: var(--muted); max-width: 62ch; }
+
+.screen {
+  position: relative; width: 100%; aspect-ratio: 16 / 9; min-height: 200px; max-width: 100%;
+  background: #000; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 10px 30px -14px rgba(0,0,0,.45);
+}
+.screen .pl { position: absolute; inset: 0; visibility: hidden; }
+.screen .pl.show { visibility: visible; }
+.screen iframe { width: 100%; height: 100%; border: 0; display: block; }
+.screen .idle {
+  position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px;
+  color: #9FB3B8; font-family: var(--font-lcd); font-size: 14px; letter-spacing: .06em;
+}
+.tap {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  background: rgba(0,0,0,.75); color: #FFFFFF; border-radius: 999px; padding: 6px 14px; font-size: 13.5px;
+  pointer-events: none; white-space: nowrap;
+}
+
+.tracks { display: grid; border-top: 1px solid var(--line); margin: 0; padding: 0; list-style: none; }
+.tracks li { padding: 12px 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; }
+.tracks .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.tracks .what { min-width: 0; }
+.tracks .what b { display: block; }
+.tracks .what span { font-size: 13.5px; color: var(--muted); }
+.tracks .what a { color: var(--link); text-underline-offset: 2px; }
+.tracks label { font-size: 13px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.tracks input { width: 5.5em; font: inherit; font-size: 13px; padding: 3px 6px; border: 1px solid var(--key-edge); border-radius: 6px; background: var(--key); color: var(--ink); font-variant-numeric: tabular-nums; }
+@media (max-width: 460px) { .tracks li { grid-template-columns: auto minmax(0, 1fr); } .tracks label { grid-column: 2; } }
+
+.rules { margin: 0; padding-left: 1.2em; color: var(--muted); display: grid; gap: 4px; max-width: 62ch; }
+.rules b { color: var(--ink); font-weight: 600; }
+kbd { font-family: var(--font-tag); font-size: 12px; border: 1px solid var(--key-edge); border-bottom-width: 2px; border-radius: 5px; padding: 0 6px; background: var(--key); color: var(--ink); }
+
+:focus-visible { outline: 3px solid var(--link); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  .on .fan i, .on .snow { animation: none; }
+  .key, .seg, .snow { transition: none; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="remote" id="remote" aria-label="Mood Cooler remote">
+    <div class="ir" aria-hidden="true"></div>
+    <div class="brand"><b>COOL&middot;DOWN</b><span>Mood Cooler</span></div>
+
+    <div class="lcd" aria-live="polite">
+      <div class="seg-row"><div class="segs" id="modeSegs"></div></div>
+      <div class="temp-row">
+        <div class="temp"><span id="temp">37</span><sup>&deg;C</sup></div>
+        <div class="side">
+          <span class="seg lit" id="segHot">HOT</span>
+          <span class="seg" id="segCool">COOL</span>
+          <svg class="snow" id="snow" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17l17.4-10"/><path d="M9 3.8l3 2.2 3-2.2M9 20.2l3-2.2 3 2.2"/></g></svg>
+          <div class="fan" aria-hidden="true"><i></i><i></i><i></i></div>
+        </div>
+      </div>
+      <div class="seg-row"><span id="status">STANDBY</span><span id="time">20s</span></div>
+      <div class="bar"><i id="bar"></i></div>
+    </div>
+
+    <div class="keys" id="keys"></div>
+
+    <div class="bottom">
+      <button class="stop" id="stop" type="button" aria-label="Stop">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></g></svg>
+        <span>STOP</span>
+      </button>
+      <fieldset class="clip">
+        <legend>Play for</legend>
+        <div class="clip-opts">
+          <label><input type="radio" name="clip" id="clip10" value="10"><span>10s</span></label>
+          <label><input type="radio" name="clip" id="clip20" value="20" checked><span>20s</span></label>
+          <label><input type="radio" name="clip" id="clip30" value="30"><span>30s</span></label>
+          <label><input type="radio" name="clip" id="clip0" value="0"><span>Full</span></label>
+        </div>
+      </fieldset>
+    </div>
+  </section>
+
+  <section class="sheet">
+    <div>
+      <h1>Press a button. Music plays.</h1>
+      <p>Each button plays a short clip right here. The temperature on the remote drops from 37&deg;C to 22&deg;C while it plays, then the music fades out.</p>
+    </div>
+
+    <div class="screen" id="screen">
+      <div class="idle" id="idle">LOADING PLAYER&hellip;</div>
+      <div class="tap" id="tap" hidden>Tap the video to start</div>
+    </div>
+
+    <div>
+      <h2>Tracks</h2>
+      <ul class="tracks" id="tracks"></ul>
+    </div>
+
+    <div>
+      <h2>Tips</h2>
+      <ul class="rules">
+        <li><b>Press, then carry on as normal.</b> No need to explain.</li>
+        <li><b>Wait for a pause.</b> Right after someone finishes talking works best.</li>
+        <li><b>Skip it when someone is really upset.</b> Music won&rsquo;t help then.</li>
+        <li>On a computer: <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> to play, <kbd>Esc</kbd> to stop.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const TRACKS = [
+    { name: 'Lighten Up', lcd: 'LIGHT', hint: 'A light, playful tune', c: '--m1', id: 'c-fUGBfJHCY', start: 0,
+      credit: '"Frolic" by Luciano Michelini' },
+    { name: 'Quick Step', lcd: 'QUICK', hint: 'Fast piano from a Chaplin film', c: '--m2', id: 'H19jByxrqlw', start: 0,
+      credit: 'Brahms, Hungarian Dance No. 5, from The Great Dictator (1940)' },
+    { name: 'Big Finish', lcd: 'BIG', hint: 'The big chorus from Titanic', c: '--m3', id: '44vf1Sv6XD0', start: 185,
+      credit: 'Céline Dion, "My Heart Will Go On"' },
+  ];
+  const HOT = 37, COOL = 22, FADE = 1.5;
+  const $ = id => document.getElementById(id);
+  const watchURL = i => `https://www.youtube.com/watch?v=${TRACKS[i].id}&t=${startOf(i)}s`;
+
+  /* ---------- saved settings (this browser only) ---------- */
+  let starts = {};
+  try { starts = JSON.parse(localStorage.getItem('mood-starts') || '{}') || {}; } catch (e) {}
+  const startOf = i => Number.isFinite(starts[i]) ? starts[i] : TRACKS[i].start;
+  let clip = 20;
+  try { const v = localStorage.getItem('mood-clip2'); if (['0', '10', '20', '30'].includes(v)) clip = +v; } catch (e) {}
+  $('clip' + clip).checked = true;
+  const clipLabel = () => clip ? clip + 's' : 'FULL';
+
+  /* ---------- build UI ---------- */
+  const fmt = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  const parseTime = v => {
+    v = String(v).trim();
+    const m = /^(\d+):([0-5]?\d)$/.exec(v);
+    if (m) return +m[1] * 60 + +m[2];
+    return /^\d+$/.test(v) ? +v : NaN;
+  };
+  TRACKS.forEach((t, i) => {
+    const s = document.createElement('span');
+    s.className = 'seg'; s.textContent = t.lcd;
+    $('modeSegs').appendChild(s);
+
+    const k = document.createElement('button');
+    k.id = 'key' + i;
+    $('keys').appendChild(k);
+
+    const pl = document.createElement('div');
+    pl.className = 'pl'; pl.innerHTML = `<div id="yt${i}"></div>`;
+    $('screen').insertBefore(pl, $('tap'));
+
+    const li = document.createElement('li');
+    li.style.setProperty('--c', `var(${t.c})`);
+    li.innerHTML = `<i class="dot"></i><div class="what"><b></b><span></span> &middot; <span><a target="_blank" rel="noopener">Open on YouTube</a></span></div>
+      <label>Start at <input type="text" inputmode="numeric" id="start${i}" aria-label="Start time for ${t.name}, minutes:seconds"></label>`;
+    li.querySelector('b').textContent = `${i + 1} · ${t.name}`;
+    li.querySelector('.what > span').textContent = t.credit;
+    li.querySelector('a').href = watchURL(i);
+    $('tracks').appendChild(li);
+    const inp = $('start' + i);
+    inp.value = fmt(startOf(i));
+    inp.addEventListener('change', () => {
+      const v = parseTime(inp.value);
+      if (Number.isFinite(v)) { starts[i] = v; } else { delete starts[i]; }
+      inp.value = fmt(startOf(i));
+      li.querySelector('a').href = watchURL(i);
+      try { localStorage.setItem('mood-starts', JSON.stringify(starts)); } catch (e) {}
+      renderKey(i);
+    });
+  });
+
+  // state per track: 'loading' | 'ready' | 'link' (can't play here, opens YouTube instead)
+  const state = TRACKS.map(() => 'loading');
+  function renderKey(i) {
+    const t = TRACKS[i], old = $('key' + i), asLink = state[i] === 'link';
+    const k = document.createElement(asLink ? 'a' : 'button');
+    if (asLink) { k.href = watchURL(i); k.target = '_blank'; k.rel = 'noopener'; } else k.type = 'button';
+    k.id = 'key' + i;
+    k.className = 'key' + (old.classList.contains('active') ? ' active' : '');
+    k.style.setProperty('--c', `var(${t.c})`);
+    k.innerHTML = `<span class="num">${i + 1}</span><span><span class="name"></span><span class="hint"></span></span><span class="tag"></span>`;
+    k.querySelector('.name').textContent = t.name;
+    k.querySelector('.hint').textContent = t.hint;
+    const tag = k.querySelector('.tag');
+    tag.textContent = { loading: 'LOADING', ready: 'READY', link: 'YOUTUBE' }[state[i]];
+    tag.classList.toggle('ready', state[i] !== 'loading');
+    k.addEventListener('click', () => press(i));
+    old.replaceWith(k);
+  }
+  TRACKS.forEach((_, i) => renderKey(i));
+
+  /* ---------- LCD ---------- */
+  const remote = $('remote'), tempEl = $('temp'), statusEl = $('status'), timeEl = $('time'), barEl = $('bar');
+  function setTemp(v) {
+    tempEl.textContent = Math.round(v);
+    const hot = v >= 28;
+    $('segHot').classList.toggle('lit', hot);
+    $('segCool').classList.toggle('lit', !hot);
+  }
+  function lightMode(i) {
+    [...$('modeSegs').children].forEach((s, k) => s.classList.toggle('lit', k === i));
+    TRACKS.forEach((_, k) => $('key' + k).classList.toggle('active', k === i));
+  }
+  function showPlayer(i) {
+    document.querySelectorAll('.screen .pl').forEach((el, k) => el.classList.toggle('show', k === i));
+    $('idle').hidden = i >= 0;
+  }
+  document.querySelectorAll('input[name="clip"]').forEach(r => r.addEventListener('change', () => {
+    clip = +r.value;
+    try { localStorage.setItem('mood-clip2', String(clip)); } catch (e) {}
+    if (!playing) timeEl.textContent = clipLabel();
+  }));
+  setTemp(HOT);
+  timeEl.textContent = clipLabel();
+
+  /* ---------- YouTube players ---------- */
+  const players = [];
+  let apiReady = false, pending = null;
+  window.onYouTubeIframeAPIReady = () => {
+    apiReady = true;
+    TRACKS.forEach((t, i) => {
+      players[i] = new YT.Player('yt' + i, {
+        videoId: t.id,
+        width: '100%', height: '100%',
+        playerVars: { start: startOf(i), playsinline: 1, rel: 0, modestbranding: 1, origin: location.origin },
+        events: {
+          onReady: () => {
+            if (state[i] === 'loading') { state[i] = 'ready'; renderKey(i); }
+            if (allSettled()) $('idle').textContent = 'PRESS A BUTTON';
+            if (pending === i) { pending = null; press(i); }
+          },
+          onError: () => {
+            state[i] = 'link'; renderKey(i);
+            if (playing && playing.i === i) failToLink(i);
+          },
+          onStateChange: e => onState(i, e.data),
+        },
+      });
+    });
+  };
+  const allSettled = () => state.every(s => s !== 'loading');
+  // If YouTube can't load at all (blocked network, offline), every button falls back to opening YouTube.
+  setTimeout(() => {
+    if (apiReady && allSettled()) return;
+    TRACKS.forEach((_, i) => { if (state[i] === 'loading') { state[i] = 'link'; renderKey(i); } });
+    $('idle').textContent = 'PLAYER UNAVAILABLE. BUTTONS OPEN YOUTUBE';
+  }, 10000);
+  const tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  tag.onerror = () => {
+    TRACKS.forEach((_, i) => { state[i] = 'link'; renderKey(i); });
+    $('idle').textContent = 'PLAYER UNAVAILABLE. BUTTONS OPEN YOUTUBE';
+  };
+  document.head.appendChild(tag);
+
+  /* ---------- playback ---------- */
+  let playing = null;
+  function press(i) {
+    if (state[i] === 'link') { startVisual(i); return; }   // the key is a real link; the browser opens YouTube
+    halt();
+    lightMode(i);
+    remote.classList.add('on');
+    $('snow').classList.add('lit');
+    if (state[i] === 'loading' || !players[i] || !players[i].playVideo) {
+      pending = i;
+      statusEl.textContent = 'WARMING UP';
+      return;
+    }
+    const pl = players[i], from = startOf(i);
+    showPlayer(i);
+    pl.unMute(); pl.setVolume(100);
+    pl.seekTo(from, true);
+    pl.playVideo();
+    playing = { i, pl, from, D: clip || NaN, started: false };
+    statusEl.textContent = 'STARTING';
+    const p = playing;
+    p.nudge = setTimeout(() => { if (playing === p && !p.started) $('tap').hidden = false; }, 2500);
+    requestAnimationFrame(tick);
+  }
+  function onState(i, s) {
+    const p = playing;
+    if (!p || p.i !== i) return;
+    if (s === YT.PlayerState.PLAYING && !p.started) {
+      p.started = true;
+      $('tap').hidden = true;
+      if (!clip) p.D = Math.max(1, p.pl.getDuration() - p.from);
+    }
+    if (s === YT.PlayerState.ENDED) finish();
+  }
+  function startVisual(i) {
+    halt();
+    const t0 = performance.now();
+    playing = { i, D: clip || 20, visual: true, started: true, now: () => (performance.now() - t0) / 1000 };
+    lightMode(i);
+    remote.classList.add('on');
+    $('snow').classList.add('lit');
+    requestAnimationFrame(tick);
+  }
+  function tick() {
+    const p = playing;
+    if (!p) return;
+    if (p.started && isFinite(p.D)) {
+      const t = Math.max(0, p.visual ? p.now() : p.pl.getCurrentTime() - p.from);
+      const r = Math.min(1, t / p.D), left = p.D - t;
+      setTemp(HOT - (HOT - COOL) * r);
+      barEl.style.width = (r * 100) + '%';
+      timeEl.textContent = Math.max(0, Math.ceil(left)) + 's';
+      statusEl.textContent = r < 0.2 ? 'MAX COOLING' : r < 0.7 ? 'COOLING' : 'ALMOST THERE';
+      if (!p.visual && left < FADE) p.pl.setVolume(Math.max(0, Math.round(100 * left / FADE)));
+      if (r >= 1) { finish(); return; }
+    }
+    requestAnimationFrame(tick);
+  }
+  function halt() {
+    pending = null;
+    const p = playing;
+    playing = null;
+    $('tap').hidden = true;
+    remote.classList.remove('on');
+    if (!p) return;
+    clearTimeout(p.nudge);
+    if (p.pl) { try { p.pl.pauseVideo(); p.pl.setVolume(100); } catch (e) {} }
+  }
+  function finish() {
+    halt();
+    setTemp(COOL);
+    barEl.style.width = '100%';
+    statusEl.textContent = 'MOOD: COMFORTABLE';
+    timeEl.textContent = 'DONE';
+    lightMode(-1);
+  }
+  function stopByUser() {
+    const was = playing || pending !== null;
+    halt();
+    if (!was) return;
+    statusEl.textContent = 'STOPPED';
+    timeEl.textContent = clipLabel();
+    lightMode(-1);
+  }
+  function failToLink(i) {
+    halt();
+    lightMode(-1);
+    showPlayer(-1);
+    statusEl.textContent = 'PRESS AGAIN';
+    $('idle').textContent = 'THIS VIDEO CAN’T PLAY HERE. PRESS ' + (i + 1) + ' AGAIN TO OPEN IT ON YOUTUBE';
+  }
+  $('stop').addEventListener('click', stopByUser);
+
+  document.addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target.closest && e.target.closest('input, textarea')) return;
+    const n = +e.key;
+    if (n >= 1 && n <= TRACKS.length) { e.preventDefault(); $('key' + (n - 1)).click(); }
+    else if (e.key === 'Escape') stopByUser();
+  });
+})();
+</script>
+</body>
+</html>
