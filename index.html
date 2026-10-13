@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mood Cooler</title>
-<meta name="description" content="Press a button to play a short music clip and cool the room down.">
+<meta name="description" content="A remote with four buttons. Press one to play a short music clip and cool the room down.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Chakra+Petch:wght@500;700&display=swap">
 <style>
-/* Layout: an air-conditioner remote on the left, the video screen and notes on the right; stacks on phones. */
+/* Layout: a single air-conditioner remote, centered; nothing else on the page. */
 :root {
   --wall: #E3E9EB;
   --ink: #1B2528;
@@ -28,6 +28,7 @@
   --m1: #23917A;
   --m2: #B87D06;
   --m3: #3C78B5;
+  --m4: #C2527E;
   --font-lcd: "Share Tech Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --font-tag: "Chakra Petch", "Arial Narrow", system-ui, sans-serif;
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -39,7 +40,7 @@
     --shell: #22292D; --shell-edge: #0A0E10; --key: #2C343A; --key-edge: #14191C;
     --lcd: #0C2622; --lcd-ink: #84F0D6; --lcd-off: rgba(132, 240, 214, .14);
     --stop: #E0574A; --stop-ink: #FFFFFF; --link: #7DB7FF;
-    --m1: #4FD0B1; --m2: #EFB43A; --m3: #79B4F0;
+    --m1: #4FD0B1; --m2: #EFB43A; --m3: #79B4F0; --m4: #F07FA8;
     color-scheme: dark;
   }
 }
@@ -52,11 +53,9 @@ body {
   padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .wrap {
-  max-width: 1000px; margin: 0 auto; padding-inline: 16px; padding-block: 36px 56px;
-  display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 48px; align-items: start;
+  max-width: 420px; margin: 0 auto; padding-inline: 16px; padding-block: 32px 40px;
+  display: grid; gap: 18px; justify-items: center;
 }
-@media (max-width: 780px) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-block: 20px 40px; } }
-
 /* ---------- remote ---------- */
 .remote {
   background: var(--shell);
@@ -144,44 +143,22 @@ body {
 .clip-opts input:checked + span { background: var(--ink); color: var(--shell); }
 .clip-opts input:focus-visible + span { outline: 3px solid var(--link); outline-offset: -3px; }
 
-/* ---------- right column ---------- */
-.sheet { display: grid; gap: 28px; min-width: 0; }
-.sheet h1 { font-size: 28px; line-height: 1.25; margin: 0 0 8px; text-wrap: balance; }
-.sheet h2 { font-size: 17px; margin: 0 0 10px; }
-.sheet p { margin: 0; color: var(--muted); max-width: 62ch; }
+/* YouTube players live off screen; only the remote is shown */
+#players { position: fixed; left: -10000px; top: 0; width: 200px; height: 200px; overflow: hidden; }
+#players iframe { width: 200px; height: 200px; border: 0; }
 
-.screen {
-  position: relative; width: 100%; aspect-ratio: 16 / 9; min-height: 200px; max-width: 100%;
-  background: #000; border-radius: 14px; overflow: hidden;
-  box-shadow: 0 10px 30px -14px rgba(0,0,0,.45);
+.gear {
+  appearance: none; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 2px; margin: -2px;
+  display: grid; place-items: center; border-radius: 6px;
 }
-.screen .pl { position: absolute; inset: 0; visibility: hidden; }
-.screen .pl.show { visibility: visible; }
-.screen iframe { width: 100%; height: 100%; border: 0; display: block; }
-.screen .idle {
-  position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px;
-  color: #9FB3B8; font-family: var(--font-lcd); font-size: 14px; letter-spacing: .06em;
-}
-.tap {
-  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
-  background: rgba(0,0,0,.75); color: #FFFFFF; border-radius: 999px; padding: 6px 14px; font-size: 13.5px;
-  pointer-events: none; white-space: nowrap;
-}
+.gear svg { width: 16px; height: 16px; }
+.settings { display: grid; gap: 8px; border-top: 1px dashed var(--line); padding-top: 14px; font-size: 13px; color: var(--muted); }
+.settings p { margin: 0; }
+.settings label { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.settings input { width: 5.5em; font: inherit; padding: 3px 6px; border: 1px solid var(--key-edge); border-radius: 6px; background: var(--key); color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
 
-.tracks { display: grid; border-top: 1px solid var(--line); margin: 0; padding: 0; list-style: none; }
-.tracks li { padding: 12px 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; }
-.tracks .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
-.tracks .what { min-width: 0; }
-.tracks .what b { display: block; }
-.tracks .what span { font-size: 13.5px; color: var(--muted); }
-.tracks .what a { color: var(--link); text-underline-offset: 2px; }
-.tracks label { font-size: 13px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-.tracks input { width: 5.5em; font: inherit; font-size: 13px; padding: 3px 6px; border: 1px solid var(--key-edge); border-radius: 6px; background: var(--key); color: var(--ink); font-variant-numeric: tabular-nums; }
-@media (max-width: 460px) { .tracks li { grid-template-columns: auto minmax(0, 1fr); } .tracks label { grid-column: 2; } }
-
-.rules { margin: 0; padding-left: 1.2em; color: var(--muted); display: grid; gap: 4px; max-width: 62ch; }
-.rules b { color: var(--ink); font-weight: 600; }
-kbd { font-family: var(--font-tag); font-size: 12px; border: 1px solid var(--key-edge); border-bottom-width: 2px; border-radius: 5px; padding: 0 6px; background: var(--key); color: var(--ink); }
+.credits { margin: 0; font-size: 12px; color: var(--muted); text-align: center; max-width: 380px; line-height: 1.5; }
+.credits a { color: inherit; }
 
 :focus-visible { outline: 3px solid var(--link); outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) {
@@ -194,7 +171,7 @@ kbd { font-family: var(--font-tag); font-size: 12px; border: 1px solid var(--key
 <main class="wrap">
   <section class="remote" id="remote" aria-label="Mood Cooler remote">
     <div class="ir" aria-hidden="true"></div>
-    <div class="brand"><b>COOL&middot;DOWN</b><span>Mood Cooler</span></div>
+    <div class="brand"><b>COOL&middot;DOWN</b><button class="gear" id="gear" type="button" aria-expanded="false" aria-controls="settings" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></g></svg></button></div>
 
     <div class="lcd" aria-live="polite">
       <div class="seg-row"><div class="segs" id="modeSegs"></div></div>
@@ -207,7 +184,7 @@ kbd { font-family: var(--font-tag); font-size: 12px; border: 1px solid var(--key
           <div class="fan" aria-hidden="true"><i></i><i></i><i></i></div>
         </div>
       </div>
-      <div class="seg-row"><span id="status">STANDBY</span><span id="time">20s</span></div>
+      <div class="seg-row"><span id="status">LOADING</span><span id="time">20s</span></div>
       <div class="bar"><i id="bar"></i></div>
     </div>
 
@@ -228,45 +205,24 @@ kbd { font-family: var(--font-tag); font-size: 12px; border: 1px solid var(--key
         </div>
       </fieldset>
     </div>
-  </section>
 
-  <section class="sheet">
-    <div>
-      <h1>Press a button. Music plays.</h1>
-      <p>Each button plays a short clip right here. The temperature on the remote drops from 37&deg;C to 22&deg;C while it plays, then the music fades out.</p>
-    </div>
-
-    <div class="screen" id="screen">
-      <div class="idle" id="idle">LOADING PLAYER&hellip;</div>
-      <div class="tap" id="tap" hidden>Tap the video to start</div>
-    </div>
-
-    <div>
-      <h2>Tracks</h2>
-      <ul class="tracks" id="tracks"></ul>
-    </div>
-
-    <div>
-      <h2>Tips</h2>
-      <ul class="rules">
-        <li><b>Press, then carry on as normal.</b> No need to explain.</li>
-        <li><b>Wait for a pause.</b> Right after someone finishes talking works best.</li>
-        <li><b>Skip it when someone is really upset.</b> Music won&rsquo;t help then.</li>
-        <li>On a computer: <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> to play, <kbd>Esc</kbd> to stop.</li>
-      </ul>
+    <div class="settings" id="settings" hidden>
+      <p>Where each track starts (minutes:seconds). Saved in this browser.</p>
+      <div id="startList"></div>
     </div>
   </section>
+
+  <p class="credits">"Monkeys Spinning Monkeys" by Kevin MacLeod (incompetech.com), licensed under CC BY 3.0. Other tracks play from YouTube.</p>
 </main>
+<div id="players" aria-hidden="true"></div>
 
 <script>
 (() => {
   const TRACKS = [
-    { name: 'Lighten Up', lcd: 'LIGHT', hint: 'A light, playful tune', c: '--m1', id: 'c-fUGBfJHCY', start: 0,
-      credit: '"Frolic" by Luciano Michelini' },
-    { name: 'Quick Step', lcd: 'QUICK', hint: 'Fast piano from a Chaplin film', c: '--m2', id: 'H19jByxrqlw', start: 0,
-      credit: 'Brahms, Hungarian Dance No. 5, from The Great Dictator (1940)' },
-    { name: 'Big Finish', lcd: 'BIG', hint: 'The big chorus from Titanic', c: '--m3', id: '44vf1Sv6XD0', start: 185,
-      credit: 'Céline Dion, "My Heart Will Go On"' },
+    { name: 'Lighten Up', lcd: 'LIGHT', hint: 'A light, playful tune', c: '--m1', id: 'c-fUGBfJHCY', start: 0 },
+    { name: 'Quick Step', lcd: 'QUICK', hint: 'Fast piano from a Chaplin film', c: '--m2', id: 'H19jByxrqlw', start: 0 },
+    { name: 'Big Finish', lcd: 'BIG', hint: 'The big chorus from Titanic', c: '--m3', id: '44vf1Sv6XD0', start: 185 },
+    { name: 'Bounce', lcd: 'BOUNCE', hint: 'A silly, bouncy tune', c: '--m4', id: 'ExZW8CHfiVE', start: 0 },
   ];
   const HOT = 37, COOL = 22, FADE = 1.5;
   const $ = id => document.getElementById(id);
@@ -280,8 +236,6 @@ kbd { font-family: var(--font-tag); font-size: 12px; border: 1px solid var(--key
   try { const v = localStorage.getItem('mood-clip2'); if (['0', '10', '20', '30'].includes(v)) clip = +v; } catch (e) {}
   $('clip' + clip).checked = true;
   const clipLabel = () => clip ? clip + 's' : 'FULL';
-
-  /* ---------- build UI ---------- */
   const fmt = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   const parseTime = v => {
     v = String(v).trim();
@@ -289,6 +243,8 @@ kbd { font-family: var(--font-tag); font-size: 12px; border: 1px solid var(--key
     if (m) return +m[1] * 60 + +m[2];
     return /^\d+$/.test(v) ? +v : NaN;
   };
+
+  /* ---------- build UI ---------- */
   TRACKS.forEach((t, i) => {
     const s = document.createElement('span');
     s.className = 'seg'; s.textContent = t.lcd;
@@ -298,31 +254,31 @@ kbd { font-family: var(--font-tag); font-size: 12px; border: 1px solid var(--key
     k.id = 'key' + i;
     $('keys').appendChild(k);
 
-    const pl = document.createElement('div');
-    pl.className = 'pl'; pl.innerHTML = `<div id="yt${i}"></div>`;
-    $('screen').insertBefore(pl, $('tap'));
+    const holder = document.createElement('div');
+    holder.id = 'yt' + i;
+    $('players').appendChild(holder);
 
-    const li = document.createElement('li');
-    li.style.setProperty('--c', `var(${t.c})`);
-    li.innerHTML = `<i class="dot"></i><div class="what"><b></b><span></span> &middot; <span><a target="_blank" rel="noopener">Open on YouTube</a></span></div>
-      <label>Start at <input type="text" inputmode="numeric" id="start${i}" aria-label="Start time for ${t.name}, minutes:seconds"></label>`;
-    li.querySelector('b').textContent = `${i + 1} · ${t.name}`;
-    li.querySelector('.what > span').textContent = t.credit;
-    li.querySelector('a').href = watchURL(i);
-    $('tracks').appendChild(li);
+    const row = document.createElement('label');
+    row.innerHTML = `<span></span><input type="text" inputmode="numeric" id="start${i}">`;
+    row.querySelector('span').textContent = `${i + 1} · ${t.name}`;
+    $('startList').appendChild(row);
     const inp = $('start' + i);
     inp.value = fmt(startOf(i));
     inp.addEventListener('change', () => {
       const v = parseTime(inp.value);
-      if (Number.isFinite(v)) { starts[i] = v; } else { delete starts[i]; }
+      if (Number.isFinite(v)) starts[i] = v; else delete starts[i];
       inp.value = fmt(startOf(i));
-      li.querySelector('a').href = watchURL(i);
       try { localStorage.setItem('mood-starts', JSON.stringify(starts)); } catch (e) {}
       renderKey(i);
     });
   });
+  $('gear').addEventListener('click', () => {
+    const open = $('settings').hidden;
+    $('settings').hidden = !open;
+    $('gear').setAttribute('aria-expanded', String(open));
+  });
 
-  // state per track: 'loading' | 'ready' | 'link' (can't play here, opens YouTube instead)
+  // state per track: 'loading' | 'ready' | 'link' (can't play here, so the key opens YouTube instead)
   const state = TRACKS.map(() => 'loading');
   function renderKey(i) {
     const t = TRACKS[i], old = $('key' + i), asLink = state[i] === 'link';
@@ -354,10 +310,6 @@ kbd { font-family: var(--font-tag); font-size: 12px; border: 1px solid var(--key
     [...$('modeSegs').children].forEach((s, k) => s.classList.toggle('lit', k === i));
     TRACKS.forEach((_, k) => $('key' + k).classList.toggle('active', k === i));
   }
-  function showPlayer(i) {
-    document.querySelectorAll('.screen .pl').forEach((el, k) => el.classList.toggle('show', k === i));
-    $('idle').hidden = i >= 0;
-  }
   document.querySelectorAll('input[name="clip"]').forEach(r => r.addEventListener('change', () => {
     clip = +r.value;
     try { localStorage.setItem('mood-clip2', String(clip)); } catch (e) {}
@@ -365,69 +317,69 @@ kbd { font-family: var(--font-tag); font-size: 12px; border: 1px solid var(--key
   }));
   setTemp(HOT);
   timeEl.textContent = clipLabel();
+  const idleStatus = () => { if (!playing) statusEl.textContent = state.every(s => s === 'link') ? 'OPENS YOUTUBE' : 'READY'; };
 
   /* ---------- YouTube players ---------- */
   const players = [];
-  let apiReady = false, pending = null;
+  let pending = null;
+  const allSettled = () => state.every(s => s !== 'loading');
+  function toLink(i) { state[i] = 'link'; renderKey(i); }
   window.onYouTubeIframeAPIReady = () => {
-    apiReady = true;
     TRACKS.forEach((t, i) => {
       players[i] = new YT.Player('yt' + i, {
         videoId: t.id,
-        width: '100%', height: '100%',
-        playerVars: { start: startOf(i), playsinline: 1, rel: 0, modestbranding: 1, origin: location.origin },
+        width: 200, height: 200,
+        playerVars: { start: startOf(i), playsinline: 1, rel: 0, controls: 0, origin: location.origin },
         events: {
           onReady: () => {
             if (state[i] === 'loading') { state[i] = 'ready'; renderKey(i); }
-            if (allSettled()) $('idle').textContent = 'PRESS A BUTTON';
+            if (allSettled()) idleStatus();
             if (pending === i) { pending = null; press(i); }
           },
           onError: () => {
-            state[i] = 'link'; renderKey(i);
-            if (playing && playing.i === i) failToLink(i);
+            toLink(i);
+            if (playing && playing.i === i) needsSecondPress(i);
           },
           onStateChange: e => onState(i, e.data),
         },
       });
     });
   };
-  const allSettled = () => state.every(s => s !== 'loading');
-  // If YouTube can't load at all (blocked network, offline), every button falls back to opening YouTube.
-  setTimeout(() => {
-    if (apiReady && allSettled()) return;
-    TRACKS.forEach((_, i) => { if (state[i] === 'loading') { state[i] = 'link'; renderKey(i); } });
-    $('idle').textContent = 'PLAYER UNAVAILABLE. BUTTONS OPEN YOUTUBE';
-  }, 10000);
-  const tag = document.createElement('script');
-  tag.src = 'https://www.youtube.com/iframe_api';
-  tag.onerror = () => {
-    TRACKS.forEach((_, i) => { state[i] = 'link'; renderKey(i); });
-    $('idle').textContent = 'PLAYER UNAVAILABLE. BUTTONS OPEN YOUTUBE';
-  };
-  document.head.appendChild(tag);
+  function giveUpLoading() {
+    TRACKS.forEach((_, i) => { if (state[i] === 'loading') toLink(i); });
+    idleStatus();
+  }
+  // If YouTube can't load at all (blocked network, offline), every key falls back to opening YouTube.
+  setTimeout(() => { if (!allSettled()) giveUpLoading(); }, 10000);
+  const api = document.createElement('script');
+  api.src = 'https://www.youtube.com/iframe_api';
+  api.onerror = giveUpLoading;
+  document.head.appendChild(api);
 
   /* ---------- playback ---------- */
   let playing = null;
-  function press(i) {
-    if (state[i] === 'link') { startVisual(i); return; }   // the key is a real link; the browser opens YouTube
-    halt();
+  function cooling(i) {
     lightMode(i);
     remote.classList.add('on');
     $('snow').classList.add('lit');
+  }
+  function press(i) {
+    if (state[i] === 'link') { startVisual(i); return; }   // the key is a real link; the browser opens YouTube
+    halt();
+    cooling(i);
     if (state[i] === 'loading' || !players[i] || !players[i].playVideo) {
       pending = i;
       statusEl.textContent = 'WARMING UP';
       return;
     }
     const pl = players[i], from = startOf(i);
-    showPlayer(i);
     pl.unMute(); pl.setVolume(100);
     pl.seekTo(from, true);
     pl.playVideo();
-    playing = { i, pl, from, D: clip || NaN, started: false };
+    const p = playing = { i, pl, from, D: clip || NaN, started: false };
     statusEl.textContent = 'STARTING';
-    const p = playing;
-    p.nudge = setTimeout(() => { if (playing === p && !p.started) $('tap').hidden = false; }, 2500);
+    // Some phones won't start sound from a hidden player. Then the key turns into a YouTube link for the next press.
+    p.nudge = setTimeout(() => { if (playing === p && !p.started) { toLink(i); needsSecondPress(i); } }, 4000);
     requestAnimationFrame(tick);
   }
   function onState(i, s) {
@@ -435,7 +387,6 @@ kbd { font-family: var(--font-tag); font-size: 12px; border: 1px solid var(--key
     if (!p || p.i !== i) return;
     if (s === YT.PlayerState.PLAYING && !p.started) {
       p.started = true;
-      $('tap').hidden = true;
       if (!clip) p.D = Math.max(1, p.pl.getDuration() - p.from);
     }
     if (s === YT.PlayerState.ENDED) finish();
@@ -444,9 +395,7 @@ kbd { font-family: var(--font-tag); font-size: 12px; border: 1px solid var(--key
     halt();
     const t0 = performance.now();
     playing = { i, D: clip || 20, visual: true, started: true, now: () => (performance.now() - t0) / 1000 };
-    lightMode(i);
-    remote.classList.add('on');
-    $('snow').classList.add('lit');
+    cooling(i);
     requestAnimationFrame(tick);
   }
   function tick() {
@@ -468,7 +417,6 @@ kbd { font-family: var(--font-tag); font-size: 12px; border: 1px solid var(--key
     pending = null;
     const p = playing;
     playing = null;
-    $('tap').hidden = true;
     remote.classList.remove('on');
     if (!p) return;
     clearTimeout(p.nudge);
@@ -490,12 +438,11 @@ kbd { font-family: var(--font-tag); font-size: 12px; border: 1px solid var(--key
     timeEl.textContent = clipLabel();
     lightMode(-1);
   }
-  function failToLink(i) {
+  function needsSecondPress(i) {
     halt();
     lightMode(-1);
-    showPlayer(-1);
-    statusEl.textContent = 'PRESS AGAIN';
-    $('idle').textContent = 'THIS VIDEO CAN’T PLAY HERE. PRESS ' + (i + 1) + ' AGAIN TO OPEN IT ON YOUTUBE';
+    statusEl.textContent = `PRESS ${i + 1} AGAIN`;
+    timeEl.textContent = clipLabel();
   }
   $('stop').addEventListener('click', stopByUser);
 
